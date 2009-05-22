@@ -44,7 +44,7 @@ def _child_get(node, childs):
 			clds.append(n)
 	return clds
 
-class _rml_styles(object):
+class Styles(object):
 	def __init__(self, nodes):
 		self.styles = {}
 		self.names = {}
@@ -81,8 +81,8 @@ class _rml_styles(object):
 		styles = []
 		for node in style_node.childNodes:
 			if node.nodeType==node.ELEMENT_NODE:
-				start = utils.tuple_int_get(node, 'start', (0,0) )
-				stop = utils.tuple_int_get(node, 'stop', (-1,-1) )
+				start = utils.tuple_int_get(node, 'start', (0,0))
+				stop = utils.tuple_int_get(node, 'stop', (-1,-1))
 				if node.localName=='blockValign':
 					styles.append(('VALIGN', start, stop, str(node.getAttribute('value'))))
 				elif node.localName=='blockFont':
@@ -127,13 +127,13 @@ class _rml_styles(object):
 			if node.getAttribute('style') in self.styles:
 				style = copy.deepcopy(self.styles[node.getAttribute('style')])
 			else:
-				sys.stderr.write('Warning: style not found, %s - setting default!\n' % (node.getAttribute('style'),) )
+				sys.stderr.write('Warning: style not found, %s - setting default!\n' % (node.getAttribute('style'),))
 		if not style:
 			styles = reportlab.lib.styles.getSampleStyleSheet()
 			style = copy.deepcopy(styles['Normal'])
 		return self._para_style_update(style, node)
 
-class _rml_doc(object):
+class Document(object):
 	def __init__(self, data):
 		self.dom = xml.dom.minidom.parseString(data)
 		self.filename = self.dom.documentElement.getAttribute('filename')
@@ -147,7 +147,7 @@ class _rml_doc(object):
 			for font in node.getElementsByTagName('registerFont'):
 				name = font.getAttribute('fontName').encode('ascii')
 				fname = font.getAttribute('fontFile').encode('ascii')
-				pdfmetrics.registerFont(TTFont(name, fname ))
+				pdfmetrics.registerFont(TTFont(name, fname))
 				addMapping(name, 0, 0, name)    #normal
 				addMapping(name, 0, 1, name)    #italic
 				addMapping(name, 1, 0, name)    #bold
@@ -159,21 +159,21 @@ class _rml_doc(object):
 			self.docinit(el)
 
 		el = self.dom.documentElement.getElementsByTagName('stylesheet')
-		self.styles = _rml_styles(el)
+		self.styles = Styles(el)
 
 		el = self.dom.documentElement.getElementsByTagName('template')
 		if len(el):
-			pt_obj = _rml_template(out, el[0], self)
+			pt_obj = Template(out, el[0], self)
 			pt_obj.render(self.dom.documentElement.getElementsByTagName('story')[0])
 		else:
 			self.canvas = canvas.Canvas(out)
 			pd = self.dom.documentElement.getElementsByTagName('pageDrawing')[0]
-			pd_obj = _rml_canvas(self.canvas, None, self)
+			pd_obj = Canvas(self.canvas, None, self)
 			pd_obj.render(pd)
 			self.canvas.showPage()
 			self.canvas.save()
 
-class _rml_canvas(object):
+class Canvas(object):
 	def __init__(self, canvas, doc_tmpl=None, doc=None):
 		self.canvas = canvas
 		self.styles = doc.styles
@@ -194,27 +194,33 @@ class _rml_canvas(object):
 
 	def _drawString(self, node):
 		self.canvas.drawString(text=self._textual(node), **utils.attr_get(node, ['x','y']))
+		
 	def _drawCenteredString(self, node):
 		self.canvas.drawCentredString(text=self._textual(node), **utils.attr_get(node, ['x','y']))
+		
 	def _drawRightString(self, node):
 		self.canvas.drawRightString(text=self._textual(node), **utils.attr_get(node, ['x','y']))
+		
 	def _rect(self, node):
 		if node.hasAttribute('round'):
 			self.canvas.roundRect(radius=utils.unit_get(node.getAttribute('round')), **utils.attr_get(node, ['x','y','width','height'], {'fill':'bool','stroke':'bool'}))
 		else:
 			self.canvas.rect(**utils.attr_get(node, ['x','y','width','height'], {'fill':'bool','stroke':'bool'}))
+			
 	def _ellipse(self, node):
 		x1 = utils.unit_get(node.getAttribute('x'))
 		x2 = utils.unit_get(node.getAttribute('width'))
 		y1 = utils.unit_get(node.getAttribute('y'))
 		y2 = utils.unit_get(node.getAttribute('height'))
 		self.canvas.ellipse(x1,y1,x2,y2, **utils.attr_get(node, [], {'fill':'bool','stroke':'bool'}))
+		
 	def _curves(self, node):
 		line_str = utils.text_get(node).split()
 		lines = []
 		while len(line_str)>7:
 			self.canvas.bezier(*[utils.unit_get(l) for l in line_str[0:8]])
 			line_str = line_str[8:]
+			
 	def _lines(self, node):
 		line_str = utils.text_get(node).split()
 		lines = []
@@ -222,10 +228,12 @@ class _rml_canvas(object):
 			lines.append([utils.unit_get(l) for l in line_str[0:4]])
 			line_str = line_str[4:]
 		self.canvas.lines(lines)
+		
 	def _grid(self, node):
 		xlist = [utils.unit_get(s) for s in node.getAttribute('xs').split(',')]
 		ylist = [utils.unit_get(s) for s in node.getAttribute('ys').split(',')]
 		self.canvas.grid(xlist, ylist)
+		
 	def _translate(self, node):
 		dx = 0
 		dy = 0
@@ -239,7 +247,7 @@ class _rml_canvas(object):
 		self.canvas.circle(x_cen=utils.unit_get(node.getAttribute('x')), y_cen=utils.unit_get(node.getAttribute('y')), r=utils.unit_get(node.getAttribute('radius')), **utils.attr_get(node, [], {'fill':'bool','stroke':'bool'}))
 
 	def _place(self, node):
-		flows = _rml_flowable(self.doc).render(node)
+		flows = Flowable(self.doc).render(node)
 		infos = utils.attr_get(node, ['x','y','width','height'])
 
 		infos['y']+=infos['height']
@@ -347,7 +355,7 @@ class _rml_canvas(object):
 						tags[tag](nd)
 						break
 
-class _rml_draw(object):
+class Draw(object):
 	def __init__(self, node, styles):
 		self.node = node
 		self.styles = styles
@@ -355,11 +363,11 @@ class _rml_draw(object):
 
 	def render(self, canvas, doc):
 		canvas.saveState()
-		cnv = _rml_canvas(canvas, doc, self.styles)
+		cnv = Canvas(canvas, doc, self.styles)
 		cnv.render(self.node)
 		canvas.restoreState()
 
-class _rml_flowable(object):
+class Flowable(object):
 	def __init__(self, doc):
 		self.doc = doc
 		self.styles = doc.styles
@@ -387,6 +395,9 @@ class _rml_flowable(object):
 		length = 0
 		colwidths = None
 		rowheights = None
+		horizonal_align = None
+		vertical_align = None
+		
 		data = []
 		for tr in _child_get(node,'tr'):
 			data2 = []
@@ -394,10 +405,10 @@ class _rml_flowable(object):
 				flow = []
 				for n in td.childNodes:
 					if n.nodeType==node.ELEMENT_NODE:
-						flow.append( self._flowable(n) )
+						flow.append(self._flowable(n))
 				if not len(flow):
 					flow = self._textual(td)
-				data2.append( flow )
+				data2.append(flow)
 			if len(data2)>length:
 				length=len(data2)
 				for ab in data:
@@ -405,13 +416,27 @@ class _rml_flowable(object):
 						ab.append('')
 			while len(data2)<length:
 				data2.append('')
-			data.append( data2 )
+			data.append(data2)
+		
+		if not data:
+		    raise ValueError, "Empty Table" 
+		
 		if node.hasAttribute('colWidths'):
-			assert length == len(node.getAttribute('colWidths').split(','))
 			colwidths = [utils.unit_get(f.strip()) for f in node.getAttribute('colWidths').split(',')]
+			if len(colwidths) == 1 and length > 1:
+				colwidth = colwidths[0]
+				colwidths = [colwidth for x in xrange(1, length + 1)]
 		if node.hasAttribute('rowHeights'):
 			rowheights = [utils.unit_get(f.strip()) for f in node.getAttribute('rowHeights').split(',')]
-		table = platypus.Table(data = data, colWidths=colwidths, rowHeights=rowheights, **(utils.attr_get(node, ['splitByRow'] ,{'repeatRows':'int','repeatCols':'int'})))
+			if len(rowheights) == 1 and len(data) > 1:
+			    rowheight = rowheights[0]
+			    rowheights = [rowheight for x in xrange(1, len(data) + 1)]
+		if node.hasAttribute("hAlign"):
+			horizonal_align = node.getAttribute('hAlign')
+		if node.hasAttribute("vAlign"):
+			vertical_align = node.getAttribute('vAlign')
+		table = platypus.Table(data = data, colWidths=colwidths, rowHeights=rowheights, hAlign=horizonal_align, vAlign=vertical_align,
+		                       **(utils.attr_get(node, ['splitByRow'] ,{'repeatRows':'int','repeatCols':'int'})))
 		if node.hasAttribute('style'):
 			table.setStyle(self.styles.table_styles[node.getAttribute('style')])
 		return table
@@ -427,12 +452,16 @@ class _rml_flowable(object):
 				return (self.width, self.height)
 			def draw(self):
 				canvas = self.canv
-				drw = _rml_draw(self.node, self.styles)
+				drw = Draw(self.node, self.styles)
 				drw.render(self.canv, None)
 		return Illustration(node, self.styles)
 
 	def _flowable(self, node):
 		if node.localName=='para':
+			style = self.styles.para_style_get(node)
+			return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
+		elif node.localName == "p":
+			# support html <p> for paragraph tags
 			style = self.styles.para_style_get(node)
 			return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
 		elif node.localName=='name':
@@ -450,19 +479,23 @@ class _rml_flowable(object):
 			return  self._table(node)
 		elif node.localName=='title':
 			styles = reportlab.lib.styles.getSampleStyleSheet()
-			style = styles['Title']
+			# FIXME: better interface for accessing styles see TODO
+			style = self.styles.styles.get('style.Title', styles['Title'])
 			return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
 		elif node.localName=='h1':
 			styles = reportlab.lib.styles.getSampleStyleSheet()
-			style = styles['Heading1']
+			# although not defined in spec, we assume same as "title" see RML spec
+			style = self.styles.styles.get('style.h1', styles['Heading1'])
 			return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
 		elif node.localName=='h2':
 			styles = reportlab.lib.styles.getSampleStyleSheet()
-			style = styles['Heading2']
+			# although not defined in spec, we assume same as "title" see RML spec
+			style = self.styles.styles.get('style.h2', styles['Heading2'])
 			return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
 		elif node.localName=='h3':
 			styles = reportlab.lib.styles.getSampleStyleSheet()
-			style = styles['Heading3']
+			# although not defined in spec, we assume same as "title" see RML spec
+			style = self.styles.styles.get('style.h2', styles['Heading3'])
 			return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
 		elif node.localName=='image':
 			return platypus.Image(node.getAttribute('file'), mask=(250,255,250,255,250,255), **(utils.attr_get(node, ['width','height'])))
@@ -496,13 +529,13 @@ class _rml_flowable(object):
 			node = node.nextSibling
 		return story
 
-class _rml_template(object):
+class Template(object):
 	def __init__(self, out, node, doc):
 		if not node.hasAttribute('pageSize'):
 			pageSize = (utils.unit_get('21cm'), utils.unit_get('29.7cm'))
 		else:
 			ps = map(lambda x:x.strip(), node.getAttribute('pageSize').replace(')', '').replace('(', '').split(','))
-			pageSize = ( utils.unit_get(ps[0]),utils.unit_get(ps[1]) )
+			pageSize = (utils.unit_get(ps[0]),utils.unit_get(ps[1]))
 		cm = reportlab.lib.units.cm
 		self.doc_tmpl = platypus.BaseDocTemplate(out, pagesize=pageSize, **utils.attr_get(node, ['leftMargin','rightMargin','topMargin','bottomMargin'], {'allowSplitting':'int','showBoundary':'bool','title':'str','author':'str'}))
 		self.page_templates = []
@@ -512,23 +545,23 @@ class _rml_template(object):
 		for pt in pts:
 			frames = []
 			for frame_el in pt.getElementsByTagName('frame'):
-				frame = platypus.Frame( **(utils.attr_get(frame_el, ['x1','y1', 'width','height', 'leftPadding', 'rightPadding', 'bottomPadding', 'topPadding'], {'id':'text', 'showBoundary':'bool'})) )
-				frames.append( frame )
+				frame = platypus.Frame(**(utils.attr_get(frame_el, ['x1','y1', 'width','height', 'leftPadding', 'rightPadding', 'bottomPadding', 'topPadding'], {'id':'text', 'showBoundary':'bool'})))
+				frames.append(frame)
 			gr = pt.getElementsByTagName('pageGraphics')
 			if len(gr):
-				drw = _rml_draw(gr[0], self.doc)
-				self.page_templates.append( platypus.PageTemplate(frames=frames, onPage=drw.render, **utils.attr_get(pt, [], {'id':'str'}) ))
+				drw = Draw(gr[0], self.doc)
+				self.page_templates.append(platypus.PageTemplate(frames=frames, onPage=drw.render, **utils.attr_get(pt, [], {'id':'str'})))
 			else:
-				self.page_templates.append( platypus.PageTemplate(frames=frames, **utils.attr_get(pt, [], {'id':'str'}) ))
+				self.page_templates.append(platypus.PageTemplate(frames=frames, **utils.attr_get(pt, [], {'id':'str'})))
 		self.doc_tmpl.addPageTemplates(self.page_templates)
 
 	def render(self, node_story):
-		r = _rml_flowable(self.doc)
+		r = Flowable(self.doc)
 		fis = r.render(node_story)
 		self.doc_tmpl.build(fis)
 
-def parseString(data, fout=None):
-	r = _rml_doc(data)
+def parse_string(data, fout=None):
+	r = Document(data)
 	if fout:
 		fp = file(fout,'wb')
 		r.render(fp)
@@ -538,6 +571,9 @@ def parseString(data, fout=None):
 		fp = StringIO.StringIO()
 		r.render(fp)
 		return fp.getvalue()
+
+# backwards compatibility
+parseString = parse_string
 
 def trml2pdf_help():
 	print 'Usage: trml2pdf input.rml >output.pdf'
