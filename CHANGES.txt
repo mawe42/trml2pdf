@@ -1,0 +1,13 @@
+Changes from original trml2pdf
+------------------------------
+PLEASE NOTE: Some of these changes diverge from the RML spec
+
+ * add support for <p> tags - shorthand for <para>
+ * add support for styling <title>, <h1>, <h2>, <h3> tags via <paraStyle>
+ * add support for vAlign and hAlign to <blockTable>
+ * remove _rml_ prefix from class definitions
+ * raise error on empty table
+ * ability to define colWidths and rowHeights once rather than x times for each column and row
+ * fix bug xml entities (&amp; and friends)
+ * convert tabs to spaces in source files
+ * rename parseString to parse_string (keeping parseString for backwards compatibility)
