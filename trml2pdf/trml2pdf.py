@@ -388,7 +388,7 @@ class Flowable(object):
             elif (n.nodeType == node.CDATA_SECTION_NODE):
                 rc += n.data
             elif (n.nodeType == node.TEXT_NODE):
-                rc += n.data
+                rc += n.toxml() # http://www.upfrontsystems.co.za/Members/hedley/my-random-musings/trml2pdf-xml-parser-error-tip
         return rc.encode(encoding)
 
     def _table(self, node):
