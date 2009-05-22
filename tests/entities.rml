@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="no"?>
+<!DOCTYPE document SYSTEM "rml_1_0.dtd">
+<document filename="entities.pdf">
+    <template>
+        <pageTemplate>
+            <frame x1="20mm" y1="50mm" width="200mm" height="200mm"/>
+        </pageTemplate>
+    </template>
+    <story>
+        <para>Baskin &amp; Robbins</para>
+    </story>
+</document>

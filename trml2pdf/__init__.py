@@ -16,4 +16,4 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 VERSION = (0, 1, 'beta')
 
-from trml2pdf import parseString
+from trml2pdf import parse_string, parseString
