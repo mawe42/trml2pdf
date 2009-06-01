@@ -16,4 +16,13 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 VERSION = (0, 1, 'beta')
 
-from trml2pdf import parse_string, parseString
+def get_version_string():
+    if VERSION[2] is not None:
+        version = "%d.%d_%s" % VERSION
+    else:
+        version = "%d.%d" % VERSION[:2]
+    return version
+ 
+from parser import parse_string, parseString, ParserError
+
+__all__ = ['parse_string', 'ParserError']

@@ -6,8 +6,8 @@ trml2pdf - convert a Report Markup Language (RML) file to a PDF
 Synopsis
 --------
 
-	trml2pdf --help
-	trml2pdf input.rml > output.pdf
+	rml2pdf --help
+	rml2pdf input.rml output.pdf
 
 Description
 -----------
@@ -33,19 +33,15 @@ Examples
 
 Create a PDF file:
 
-	trml2pdf input.rml > output.pdf
+	rml2pdf input.rml output.pdf
 
 Use it as a python module:
 
 	import trml2pdf
-	print trml2pdf.parseString(file('file.rml','r').read())
-
-Notes
------
-
-Tiny RML2PDF is a component of the Open Report project. It can be used with the
-Tiny Reporting Server to have a complete solution to render PDF file on the
-fly.
+	
+	input_file = file('input.rml','r').read()
+	output_file = file('output.pdf', 'wb')
+	output_file.write(trml2pdf.parse_string(input_file))
 
 Original Author
 ------

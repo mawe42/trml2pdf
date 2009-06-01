@@ -1,3 +1,4 @@
-This code is copyrighted by Fabien Pinckaers (http://tiny.be)
+The original code is copyrighted by Fabien Pinckaers (http://tiny.be) and is released under LGPL License (see LICENSE.TXT).
+Portions are copyright John D'Agostino (http://www.mercurycomplex.com) and are released under the BSDL License.
 
-This is released under L-GPL License (see LICENSE.TXT).
+

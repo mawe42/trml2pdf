@@ -47,11 +47,8 @@ for dirpath, dirnames, filenames in os.walk(tagging_dir):
         data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
 
 # Dynamically calculate the version based on tagging.VERSION
-version_tuple = __import__('trml2pdf').VERSION
-if version_tuple[2] is not None:
-    version = "%d.%d_%s" % version_tuple
-else:
-    version = "%d.%d" % version_tuple[:2]
+get_version_string = __import__('trml2pdf').get_version_string
+version = get_version_string()
 
 setup(
     name = 'trml2pdf',
@@ -62,6 +59,7 @@ setup(
     url = 'http://github.com/johndagostino/trml2pdf',
     packages = packages,
     data_files = data_files,
+    scripts = ['trml2pdf/bin/rml2pdf.py'],
     classifiers = ['Development Status :: 4 - Beta',
                    'Intended Audience :: Developers',
                    'License :: OSI Approved :: LGPL',

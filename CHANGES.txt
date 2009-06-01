@@ -7,7 +7,13 @@ PLEASE NOTE: Some of these changes diverge from the RML spec
  * add support for vAlign and hAlign to <blockTable>
  * remove _rml_ prefix from class definitions
  * raise error on empty tables
- * ability to define colWidths and rowHeights once rather than x times for each column and row
+ * ability to define colWidths and rowHeights once rather than x times 
+   for each column and row
  * fix a bug with xml entities (&amp; and friends) and <para> tags
  * convert tabs to spaces in source files
  * rename parseString to parse_string (keeping parseString for backwards compatibility)
+ * created replacement cli script rml2pdf.py and moved to bin/ renamed trml2pdf.py 
+   to parser.py, added to setup.py file
+ * new file additions are licensed under the BSDL rather than LGPL,
+   changes to existing files continue to be licensed under the LGPL for obvious reasons
+ * Added ParserError Exception

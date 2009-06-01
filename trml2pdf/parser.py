@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # trml2pdf - An RML to PDF converter
@@ -37,12 +36,17 @@ import color
 #
 encoding = 'latin1'
 
+
+class ParserError(Exception): pass
+
+
 def _child_get(node, childs):
     clds = []
     for n in node.childNodes:
         if (n.nodeType==n.ELEMENT_NODE) and (n.localName==childs):
             clds.append(n)
     return clds
+
 
 class Styles(object):
     def __init__(self, nodes):
@@ -133,9 +137,14 @@ class Styles(object):
             style = copy.deepcopy(styles['Normal'])
         return self._para_style_update(style, node)
 
+
 class Document(object):
     def __init__(self, data):
-        self.dom = xml.dom.minidom.parseString(data)
+        try:
+            self.dom = xml.dom.minidom.parseString(data)
+        except Exception, e:
+            # FIXME: More descriptive Exception 
+            raise ParserError, 'Cannot Parse XML'
         self.filename = self.dom.documentElement.getAttribute('filename')
 
     def docinit(self, els):
@@ -172,6 +181,7 @@ class Document(object):
             pd_obj.render(pd)
             self.canvas.showPage()
             self.canvas.save()
+
 
 class Canvas(object):
     def __init__(self, canvas, doc_tmpl=None, doc=None):
@@ -367,6 +377,7 @@ class Draw(object):
         cnv.render(self.node)
         canvas.restoreState()
 
+
 class Flowable(object):
     def __init__(self, doc):
         self.doc = doc
@@ -419,7 +430,7 @@ class Flowable(object):
             data.append(data2)
         
         if not data:
-            raise ValueError, "Empty Table" 
+            raise ParserError, "Empty Table" 
         
         if node.hasAttribute('colWidths'):
             colwidths = [utils.unit_get(f.strip()) for f in node.getAttribute('colWidths').split(',')]
@@ -435,7 +446,9 @@ class Flowable(object):
             horizonal_align = node.getAttribute('hAlign')
         if node.hasAttribute("vAlign"):
             vertical_align = node.getAttribute('vAlign')
-        table = platypus.Table(data = data, colWidths=colwidths, rowHeights=rowheights, hAlign=horizonal_align, vAlign=vertical_align,
+        table = platypus.Table(data = data, colWidths=colwidths, 
+                                rowHeights=rowheights, hAlign=horizonal_align, 
+                                vAlign=vertical_align,
                                **(utils.attr_get(node, ['splitByRow'] ,{'repeatRows':'int','repeatCols':'int'})))
         if node.hasAttribute('style'):
             table.setStyle(self.styles.table_styles[node.getAttribute('style')])
@@ -459,20 +472,24 @@ class Flowable(object):
     def _flowable(self, node):
         if node.localName=='para':
             style = self.styles.para_style_get(node)
-            return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
+            return platypus.Paragraph(self._textual(node), style, 
+                                        **(utils.attr_get(node, [], {'bulletText':'str'})))
         elif node.localName == "p":
             # support html <p> for paragraph tags
             style = self.styles.para_style_get(node)
-            return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
+            return platypus.Paragraph(self._textual(node), style, 
+                                        **(utils.attr_get(node, [], {'bulletText':'str'})))
         elif node.localName=='name':
             self.styles.names[ node.getAttribute('id')] = node.getAttribute('value')
             return None
         elif node.localName=='xpre':
             style = self.styles.para_style_get(node)
-            return platypus.XPreformatted(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str','dedent':'int','frags':'int'})))
+            return platypus.XPreformatted(self._textual(node), style, **(utils.attr_get(node, [], 
+                                        {'bulletText':'str','dedent':'int','frags':'int'})))
         elif node.localName=='pre':
             style = self.styles.para_style_get(node)
-            return platypus.Preformatted(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str','dedent':'int'})))
+            return platypus.Preformatted(self._textual(node), style, 
+                                        **(utils.attr_get(node, [], {'bulletText':'str','dedent':'int'})))
         elif node.localName=='illustration':
             return  self._illustration(node)
         elif node.localName=='blockTable':
@@ -481,24 +498,29 @@ class Flowable(object):
             styles = reportlab.lib.styles.getSampleStyleSheet()
             # FIXME: better interface for accessing styles see TODO
             style = self.styles.styles.get('style.Title', styles['Title'])
-            return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
+            return platypus.Paragraph(self._textual(node), style, 
+                                        **(utils.attr_get(node, [], {'bulletText':'str'})))
         elif node.localName=='h1':
             styles = reportlab.lib.styles.getSampleStyleSheet()
             # although not defined in spec, we assume same as "title" see RML spec
             style = self.styles.styles.get('style.h1', styles['Heading1'])
-            return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
+            return platypus.Paragraph(self._textual(node), style, 
+                                        **(utils.attr_get(node, [], {'bulletText':'str'})))
         elif node.localName=='h2':
             styles = reportlab.lib.styles.getSampleStyleSheet()
             # although not defined in spec, we assume same as "title" see RML spec
             style = self.styles.styles.get('style.h2', styles['Heading2'])
-            return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
+            return platypus.Paragraph(self._textual(node), style, 
+                                        **(utils.attr_get(node, [], {'bulletText':'str'})))
         elif node.localName=='h3':
             styles = reportlab.lib.styles.getSampleStyleSheet()
             # although not defined in spec, we assume same as "title" see RML spec
             style = self.styles.styles.get('style.h2', styles['Heading3'])
-            return platypus.Paragraph(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'})))
+            return platypus.Paragraph(self._textual(node), style, 
+                                        **(utils.attr_get(node, [], {'bulletText':'str'})))
         elif node.localName=='image':
-            return platypus.Image(node.getAttribute('file'), mask=(250,255,250,255,250,255), **(utils.attr_get(node, ['width','height'])))
+            return platypus.Image(node.getAttribute('file'), mask=(250,255,250,255,250,255), 
+                                        **(utils.attr_get(node, ['width','height'])))
         elif node.localName=='spacer':
             if node.hasAttribute('width'):
                 width = utils.unit_get(node.getAttribute('width'))
@@ -515,7 +537,7 @@ class Flowable(object):
         elif node.localName=='nextFrame':
             return platypus.CondPageBreak(1000)           # TODO: change the 1000 !
         else:
-            sys.stderr.write('Warning: flowable not yet implemented: %s !\n' % (node.localName,))
+            raise ParserError, '%s Flowable Not Implemented' % node.localName
             return None
 
     def render(self, node_story):
@@ -529,6 +551,7 @@ class Flowable(object):
             node = node.nextSibling
         return story
 
+
 class Template(object):
     def __init__(self, out, node, doc):
         if not node.hasAttribute('pageSize'):
@@ -537,7 +560,9 @@ class Template(object):
             ps = map(lambda x:x.strip(), node.getAttribute('pageSize').replace(')', '').replace('(', '').split(','))
             pageSize = (utils.unit_get(ps[0]),utils.unit_get(ps[1]))
         cm = reportlab.lib.units.cm
-        self.doc_tmpl = platypus.BaseDocTemplate(out, pagesize=pageSize, **utils.attr_get(node, ['leftMargin','rightMargin','topMargin','bottomMargin'], {'allowSplitting':'int','showBoundary':'bool','title':'str','author':'str'}))
+        self.doc_tmpl = platypus.BaseDocTemplate(out, pagesize=pageSize, 
+                                                 **utils.attr_get(node, ['leftMargin','rightMargin','topMargin','bottomMargin'], 
+                                                {'allowSplitting':'int','showBoundary':'bool','title':'str','author':'str'}))
         self.page_templates = []
         self.styles = doc.styles
         self.doc = doc
@@ -545,20 +570,25 @@ class Template(object):
         for pt in pts:
             frames = []
             for frame_el in pt.getElementsByTagName('frame'):
-                frame = platypus.Frame(**(utils.attr_get(frame_el, ['x1','y1', 'width','height', 'leftPadding', 'rightPadding', 'bottomPadding', 'topPadding'], {'id':'text', 'showBoundary':'bool'})))
+                frame = platypus.Frame(**(utils.attr_get(frame_el, ['x1','y1', 'width','height', 'leftPadding', 
+                                                                    'rightPadding', 'bottomPadding', 'topPadding'], 
+                                                                    {'id':'text', 'showBoundary':'bool'})))
                 frames.append(frame)
             gr = pt.getElementsByTagName('pageGraphics')
             if len(gr):
                 drw = Draw(gr[0], self.doc)
-                self.page_templates.append(platypus.PageTemplate(frames=frames, onPage=drw.render, **utils.attr_get(pt, [], {'id':'str'})))
+                self.page_templates.append(platypus.PageTemplate(frames=frames, 
+                                            onPage=drw.render, **utils.attr_get(pt, [], {'id':'str'})))
             else:
-                self.page_templates.append(platypus.PageTemplate(frames=frames, **utils.attr_get(pt, [], {'id':'str'})))
+                self.page_templates.append(platypus.PageTemplate(frames=frames, 
+                                            **utils.attr_get(pt, [], {'id':'str'})))
         self.doc_tmpl.addPageTemplates(self.page_templates)
 
     def render(self, node_story):
         r = Flowable(self.doc)
         fis = r.render(node_story)
         self.doc_tmpl.build(fis)
+
 
 def parse_string(data, fout=None):
     r = Document(data)
@@ -574,17 +604,3 @@ def parse_string(data, fout=None):
 
 # backwards compatibility
 parseString = parse_string
-
-def trml2pdf_help():
-    print 'Usage: trml2pdf input.rml > output.pdf'
-    print 'Render the standard input (RML) and output a PDF file'
-    sys.exit(0)
-
-if __name__=="__main__":
-    if len(sys.argv)>1:
-        if sys.argv[1]=='--help':
-            trml2pdf_help()
-        print parseString(file(sys.argv[1], 'r').read()),
-    else:
-        print 'Usage: trml2pdf input.rml > output.pdf'
-        print 'Try \'trml2pdf --help\' for more information.'
