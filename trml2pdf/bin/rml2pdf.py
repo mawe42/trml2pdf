@@ -6,10 +6,10 @@ All rights reserved.
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
 
-    1. Redistributions of source code must retain the above copyright notice, 
+    1. Redistributions of source code must retain the above copyright notice,
        this list of conditions and the following disclaimer.
-    
-    2. Redistributions in binary form must reproduce the above copyright 
+
+    2. Redistributions in binary form must reproduce the above copyright
        notice, this list of conditions and the following disclaimer in the
        documentation and/or other materials provided with the distribution.
 
@@ -35,11 +35,13 @@ from optparse import OptionParser
 from trml2pdf import get_version_string
 from trml2pdf import parse_string, ParserError
 
+
 def help():
     print 'rml2pdf.py %s' % get_version_string()
     print 'Render RML and output to a PDF file'
     print 'Usage: trml2pdf.py input.rml output.pdf'
     sys.exit(0)
+
 
 def write_to_output(output_filename, content):
     output_file = None
@@ -52,27 +54,23 @@ def write_to_output(output_filename, content):
         if output_file:
             output_file.close()
 
+
 def main():
-    # This replaces the former method of trml2pdf.py input.rml > output.pdf
-    # It also allows for more robust customization in the future.
-    # because trml2pdf is the name of the module, the cli script 
-    # cannot be also called trml2pdf.
-    
     # No need for options currently, use this for --help, --version
-    parser = OptionParser(usage="%prog [options] input_file output_file", 
-                          version="%%prog %s" % get_version_string())    
+    parser = OptionParser(usage="%prog [options] input_file output_file",
+                          version="%%prog %s" % get_version_string())
     options, args = parser.parse_args()
-    
+
     if len(args) < 2:
         return help()
-    
+
     input_filename = args[0]
     output_filename = args[1]
-    
+
     if not os.path.exists(input_filename):
         print 'input file does not exist'
         sys.exit(0)
-    
+
     input_file = None
     try:
         input_file = open(input_filename, 'r')
@@ -80,7 +78,7 @@ def main():
     except IOError, e:
         print 'failed to open input file %s' % input_filename
         sys.exit(0)
-    finally: 
+    finally:
         if input_file:
             input_file.close()
 
@@ -90,5 +88,6 @@ def main():
         print 'parsing rml failed with the following error'
         print e
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()

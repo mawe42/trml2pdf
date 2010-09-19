@@ -14,23 +14,33 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-from reportlab.lib import colors
 import re
 
-allcols = colors.getAllNamedColors()
+from reportlab.lib import colors
 
-regex_t = re.compile('\(([0-9\.]*),([0-9\.]*),([0-9\.]*)\)')
-regex_h = re.compile('#([0-9a-zA-Z][0-9a-zA-Z])([0-9a-zA-Z][0-9a-zA-Z])([0-9a-zA-Z][0-9a-zA-Z])')
+RGB_REGEX = re.compile('\(([0-9\.]*),([0-9\.]*),([0-9\.]*)\)')
+HEX_REGEX = re.compile('#([0-9a-zA-Z][0-9a-zA-Z])([0-9a-zA-Z]' \
+                     '[0-9a-zA-Z])([0-9a-zA-Z][0-9a-zA-Z])')
+
 
 def get(col_str):
-	global allcols
-	if col_str in allcols.keys():
-		return allcols[col_str]
-	res = regex_t.search(col_str, 0)
-	if res:
-		return (float(res.group(1)),float(res.group(2)),float(res.group(3)))
-	res = regex_h.search(col_str, 0)
-	if res:
-		return tuple([ float(int(res.group(i),16))/255 for i in range(1,4)])
-	return colors.red
+    """
+    parse a string and return a tuple
+    """
+    all_colors = colors.getAllNamedColors()
+
+    if col_str in all_colors.keys():
+        return all_colors[col_str]
+
+    res = RGB_REGEX.search(col_str, 0)
+
+    if res:
+        return (float(res.group(1)),
+                float(res.group(2)),
+                float(res.group(3)))
+
+    res = HEX_REGEX.search(col_str, 0)
+
+    if res:
+        return tuple([float(int(res.group(i), 16)) / 255 for i in range(1, 4)])
+    return colors.red
