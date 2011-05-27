@@ -166,7 +166,7 @@ class Document(object):
     def __init__(self, data):
         try:
             self.dom = xml.dom.minidom.parseString(data)
-        except Exception, e:
+        except Exception:
             # FIXME: More descriptive Exception
             raise ParserError('Cannot Parse XML')
         self.filename = self.dom.documentElement.getAttribute('filename')
@@ -262,7 +262,6 @@ class Canvas(object):
 
     def _curves(self, node):
         line_str = utils.text_get(node).split()
-        lines = []
         while len(line_str) > 7:
             self.canvas.bezier(*[utils.unit_get(l) for l in line_str[0:8]])
             line_str = line_str[8:]
@@ -529,7 +528,6 @@ class Flowable(object):
                 return (self.width, self.height)
 
             def draw(self):
-                canvas = self.canv
                 drw = Draw(self.node, self.styles)
                 drw.render(self.canv, None)
 
@@ -636,7 +634,6 @@ class Template(object):
                                              .replace('(', '') \
                                              .split(', '))
             page_size = (utils.unit_get(ps[0]), utils.unit_get(ps[1]))
-        cm = reportlab.lib.units.cm
         self.doc_tmpl = platypus.BaseDocTemplate(out, pagesize=page_size,
                                                  **utils.attr_get(node, ['leftMargin', 'rightMargin', 'topMargin', 'bottomMargin'],
                                                 {'allowSplitting': 'int', 'showBoundary': 'bool', 'title': 'str', 'author': 'str'}))
