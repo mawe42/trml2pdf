@@ -412,6 +412,7 @@ class Canvas(object):
     def render(self, node):
         tags = {
             'drawCentredString': self._draw_centred_string,
+            'drawCenteredString': self._draw_centred_string,
             'drawRightString': self._draw_right_string,
             'drawString': self._draw_string,
             'rect': self._rect,
@@ -621,6 +622,20 @@ class Flowable(object):
             return platypus.NextPageTemplate(str(node.getAttribute('name')))
         elif node.localName == 'nextFrame':
             return platypus.CondPageBreak(1000)           # TODO: change the 1000 !
+        elif node.localName=='keepInFrame':
+            substory = []
+            subnode = node.firstChild
+            while subnode:
+                if node.nodeType == node.ELEMENT_NODE:
+                    subflow = self._flowable(subnode)
+                    if subflow:
+                        substory.append(subflow)
+                subnode = subnode.nextSibling
+            return platypus.KeepInFrame(content=substory,
+                                        **(utils.attr_get(node, ['maxWidth','maxHeight'],
+                                                          {'name':'str','mode':'str'})))
+        elif node.localName is None:
+            return None
         else:
             raise ParserError('%s Flowable Not Implemented' % node.localName)
             return None
