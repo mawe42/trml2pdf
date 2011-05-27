@@ -185,6 +185,19 @@ class Document(object):
                 addMapping(name, 0, 1, name)    # italic
                 addMapping(name, 1, 0, name)    # bold
                 addMapping(name, 1, 1, name)    # italic and bold
+            for font in node.getElementsByTagName('registerTTFont'):
+                face = font.getAttribute('faceName')
+                file = font.getAttribute('fileName')
+                pdfmetrics.registerFont(TTFont(face, file))
+            for family in node.getElementsByTagName('registerFontFamily'):
+                normal = font.getAttribute('normal')
+                bold = font.getAttribute('bold')
+                italic = font.getAttribute('italic')
+                bolditalic = font.getAttribute('boldItalic')
+                addMapping(normal, 0, 0, normal)
+                addMapping(normal, 1, 0, bold)
+                addMapping(normal, 0, 1, italic)
+                addMapping(normal, 1, 1, bolditalic)
 
     def render(self, out):
         doc = self.dom.documentElement
